@@ -1,0 +1,65 @@
+var atoi_text
+var keyIndex
+
+goto main
+
+bp_set_eax:
+	mov eax, atoi_text
+	goto _end
+	
+bp_fix_argv_hash:
+	memcpy ecx, edi, 16.
+	goto _end
+
+bp_fix_localtime:
+	mov [esp+6C], keyIndex, 1
+	goto _end
+
+bp_after_cout:
+	msg "Program finished"
+	goto _end
+
+main:
+	; five == 5 check
+	mov [40147F], EB, 1
+
+	; argc != 2 check
+	mov [4014F2], EB, 1
+	
+	; mem for atoi stuff
+	alloc 2
+	mov [$RESULT], 0034, 2
+	mov atoi_text, $RESULT
+
+	; bp to change eax
+	bp 401563
+	bpgoto 401563, bp_set_eax
+	
+	; bp so I can just run the shit without worrying
+	bp 401564
+	
+	; fix argv[1] hash
+	bp 401BAE
+	bpgoto 401BAE, bp_fix_argv_hash
+	
+	; fix localtime thing
+	bp 4015A0
+	bpgoto 4015A0, bp_fix_localtime
+	
+	; and ask for a better time
+	ask_time:
+		ask "Key index? [0-24)"
+		cmp $RESULT, 0
+		je ask_time
+	mov keyIndex, $RESULT
+	
+	; log pointer to data to decrypt
+	bpl 40241E, "ecx"
+	
+	; bp after cout so I can see the output of that shit
+	bp 402476
+	bpgoto 402476, bp_after_cout
+	
+	goto _end
+
+_end:
